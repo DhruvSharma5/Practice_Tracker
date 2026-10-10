@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interview Practice Tracker</title>
+  <meta name="description" content="Track your weekly interview preparation: DSA, Git and full-stack questions, with live progress and filters.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232B45F5'/%3E%3Crect x='6' y='16' width='5' height='10' rx='1.5' fill='white'/%3E%3Crect x='13.5' y='11' width='5' height='15' rx='1.5' fill='white'/%3E%3Crect x='21' y='6' width='5' height='20' rx='1.5' fill='white'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    /* Set the theme before first paint to avoid a flash */
+    (function () {
+      var theme;
+      try { theme = JSON.parse(localStorage.getItem('ipt.theme.v1')); } catch (e) {}
+      if (theme !== 'dark' && theme !== 'light') {
+        theme = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#results">Skip to questions</a>
+
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8"/>
+          <rect x="6" y="16" width="5" height="10" rx="1.5"/>
+          <rect x="13.5" y="11" width="5" height="15" rx="1.5"/>
+          <rect x="21" y="6" width="5" height="20" rx="1.5"/>
+        </svg>
+        <h1 class="brand-name">Interview Practice Tracker</h1>
+      </div>
+      <div class="top-actions">
+        <button type="button" id="themeBtn" class="icon-btn" aria-label="Switch colour theme">
+          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button type="button" id="addBtn" class="btn primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Add question
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Progress hero -->
+    <section class="hero" aria-label="Overall progress">
+      <p class="pct" aria-live="polite"><span id="pctNum">0</span><span class="pct-sign" aria-hidden="true">%</span><span class="sr-only"> complete</span></p>
+      <div class="hero-side">
+        <p id="pctCaption" class="pct-caption"></p>
+        <ul id="catBars" class="cat-bars"></ul>
+      </div>
+      <div class="strip-wrap">
+        <div id="strip" class="strip" role="img" aria-label="Progress strip"></div>
+        <ul class="legend" aria-hidden="true">
+          <li><i class="sw s-pending"></i>Pending</li>
+          <li><i class="sw s-in-progress"></i>In Progress</li>
+          <li><i class="sw s-completed"></i>Completed</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Dashboard numbers -->
+    <section id="stats" class="stats" aria-label="Dashboard"></section>
+
+    <!-- Tracker -->
+    <section class="tracker" aria-label="Question tracker">
+      <div class="toolbar">
+        <div class="search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <label for="search" class="sr-only">Search questions</label>
+          <input id="search" type="search" placeholder="Search questions" autocomplete="off">
+        </div>
+        <div id="chips" class="chips" role="group" aria-label="Filter by category"></div>
+        <div class="selects">
+          <label class="sel">
+            <span class="sr-only">Filter by status</span>
+            <select id="statusFilter"></select>
+          </label>
+          <label class="sel">
+            <span class="sr-only">Filter by difficulty</span>
+            <select id="difficultyFilter"></select>
+          </label>
+        </div>
+      </div>
+
+      <div class="result-bar">
+        <p id="resultMeta" class="result-meta" aria-live="polite"></p>
+        <button type="button" id="clearFilters" class="link-btn" hidden>Clear filters</button>
+      </div>
+
+      <div id="results"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>Everything is saved in this browser with LocalStorage. Nothing leaves your device.</p>
+    <button type="button" id="resetBtn" class="link-btn danger">Reset all data</button>
+  </footer>
+
+  <!-- Add / edit dialog -->
+  <dialog id="dlg" aria-labelledby="dlgTitle">
+    <form id="form" novalidate>
+      <header class="dlg-head">
+        <h2 id="dlgTitle">Add a question</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+
+      <div class="field">
+        <label for="qTitle">Question</label>
+        <input id="qTitle" name="title" type="text" autocomplete="off" placeholder="e.g. Rotate Array (LC 189)" aria-describedby="titleError">
+        <p id="titleError" class="error" role="alert" hidden></p>
+      </div>
+
+      <fieldset class="field">
+        <legend>Category</legend>
+        <div class="seg" data-group="category"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Difficulty</legend>
+        <div class="seg" data-group="difficulty"></div>
+      </fieldset>
+
+      <fieldset class="field">
+        <legend>Status</legend>
+        <div class="seg" data-group="status"></div>
+      </fieldset>
+
+      <footer class="dlg-foot">
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="submit" id="submitBtn" class="btn primary">Add question</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
